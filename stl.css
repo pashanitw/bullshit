@@ -27,6 +27,18 @@ figure{
 .book{
     background-image: url("cover_2.png");
 }
+figure.rotate-left{
+    transform-origin: center center;
+    transform: perspective(1000px) rotateY(65deg);
+}
+figure.rotate-right{
+    transform-origin: center center;
+    transform: perspective(1000px) rotateY(-62deg);
+}
+figure.middle{
+    margin-left: 40px;
+    transform:rotateY(0deg);
+}
 figure .frame{
     position: absolute;
     background-color:gray;

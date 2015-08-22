@@ -5,8 +5,9 @@ app.constant('resourceMetrics', {
     panelWidth: 117,
     panelHeight: 159,
     left: 20,
-    flatItems:6,
-    rotatedItems:4
+    flatItems:5,
+    rotatedItems:4,
+    focusIndex:3
 });
 app.factory('utilService',function(resourceMetrics){
     var rotateLeft=resourceMetrics.panelWidth/5;
@@ -23,7 +24,10 @@ app.factory('utilService',function(resourceMetrics){
         },
         getMaxZIndex:function(){
             return 1000;
-        }
+        },
+        getMinZIndex:function(){
+            return 0;
+        },
     }
 })
 app.directive('communicate', function (resourceMetrics,utilService) {
@@ -54,11 +58,30 @@ app.directive('communicate', function (resourceMetrics,utilService) {
             var lastOpenedScope;
             var currentPosition=0;
             var currentIndex;
+            var middle=Math.floor($scope.length/2);
+            console.log("middle is",middle);
             this.addScope = function (scope) {
 
                 scopes.push(scope);
                 if (scopes.length == 1) {
-                    _this.openThis(scope);
+                 //   _this.openThis(scope);
+                }
+                if(scope.index<middle){
+                    scope.isLeft=true;
+                    scope.isRight=false;
+                    scope.shrunk=true;
+                }
+                if(scope.index>middle){
+                    scope.isLeft=false;
+                    scope.isRight=true;
+                    scope.shrunk=true;
+                }
+                if(scope.index==middle){
+                    scope.isLeft=false;
+                    scope.isRight=false;
+                    scope.shrunk=false;
+                    scope.isMiddle=true;
+                    currentIndex=scope.index;
                 }
                 scope.init();
             };
@@ -96,23 +119,28 @@ app.directive('communicate', function (resourceMetrics,utilService) {
             };
 
             $scope.next = function () {
-                if(scopes.length>resourceMetrics.flatItems){
 
-                }
 
                 if(!currentIndex){
                     currentIndex=resourceMetrics.flatItems-1
                 }else{
                     var index=currentIndex+1;
                     if(index>=0 && index<=scopes.length-1){
+                        var currentItem=scopes[currentIndex];
+                        currentItem.isLeft=true;
+                        currentItem.isMiddle=false;
+                        currentItem.shrunk=true;
                         currentIndex=index;
                     }else{
                         return;
                     }
                 }
-                currentPosition-=resourceMetrics.panelWidth+resourceMetrics.left;
+                currentPosition-=resourceMetrics.left;
                var item=scopes[currentIndex];
                 item.shrunk=false;
+                item.isRight=false;
+                item.isLeft=false;
+                item.isMiddle=true;
                 $element.find('.carousel').css({transform: 'translateX(' + (currentPosition) + 'px )'});
 
             };
@@ -125,7 +153,7 @@ app.directive("resourceCard", function (resourceMetrics,utilService) {
     return {
         require: '^?communicate',
         template: '<figure ' +
-        'ng-click="handleClick()" ng-style="{\'zIndex\':getZindex(),\'width\':getWidth()}" ng-class="{\'main\': isOpen,\'rotate\': rotated}">' +
+        'ng-click="handleClick()" ng-style="{\'zIndex\':getZindex(),\'width\':getWidth()}" ng-class="{\'main\': isOpen,\'rotate\': rotated,\'middle\':isMiddle,\'rotate-left\':isLeft,\'rotate-right\':isRight}">' +
         '<div class="frame" ng-class="{\'cover\': isCover,\'book\': !isCover}">' +
         '<span class="title">Documents</span>' +
         '<span class="duration">00:08</span>' +
@@ -148,21 +176,19 @@ app.directive("resourceCard", function (resourceMetrics,utilService) {
             return function (scope, element, attrs, communicationController) {
                scope.rotated=false;
                 scope.init = function () {
-                    if(scope.index==0){
-                        scope.isCover=true;
-                    }
-                    var width;
-                    if(scope.index>=(resourceMetrics.flatItems-1)){
-                        scope.shrunk=true;
-                    }else{
-                        scope.shrunk=false;
-                    }
+
                     element.css({ height: resourceMetrics.panelHeight+"px"});
                     element.find('.frame').css({width:resourceMetrics.panelWidth});
                     element.css({'margin-right':resourceMetrics.left+"px"});
                 };
                 scope.getZindex=function(){
-                    return utilService.getMaxZIndex()-scope.index;
+                    if(scope.isLeft){
+                        return utilService.getMinZIndex()+scope.index;
+                    }
+                    if(scope.isRight){
+                        return utilService.getMaxZIndex()-scope.index;
+                    }
+
                 }
                 scope.getWidth=function(){
                     if(scope.shrunk){
