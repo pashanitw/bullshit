@@ -5,7 +5,6 @@ app.constant('resourceMetrics', {
     panelWidth: 117,
     panelHeight: 159,
     left: 20,
-    flatItems:5,
     rotatedItems:4,
     focusIndex:3
 });
@@ -16,8 +15,9 @@ app.factory('utilService',function(resourceMetrics){
             return (resourceMetrics.panelWidth*length)+(length-1)*resourceMetrics.left;
         },
         getContainerWidth:function(){
-            return (resourceMetrics.panelWidth*resourceMetrics.flatItems)
-                +(resourceMetrics.flatItems-1)*resourceMetrics.left+(resourceMetrics.rotatedItems*(rotateLeft+resourceMetrics.left));
+                   return 400;
+      /*      return (resourceMetrics.panelWidth*resourceMetrics.flatItems)
+                +(resourceMetrics.flatItems-1)*resourceMetrics.left+(resourceMetrics.rotatedItems*(rotateLeft+resourceMetrics.left));*/
         },
         getRotatedLeft:function(){
             return rotateLeft;
@@ -27,9 +27,9 @@ app.factory('utilService',function(resourceMetrics){
         },
         getMinZIndex:function(){
             return 0;
-        },
+        }
     }
-})
+});
 app.directive('communicate', function (resourceMetrics,utilService) {
     return {
         restrict: 'E',
@@ -58,6 +58,7 @@ app.directive('communicate', function (resourceMetrics,utilService) {
             var lastOpenedScope;
             var currentPosition=0;
             var currentIndex;
+            var defaultCarouselPos;
             var middle=Math.floor($scope.length/2);
             console.log("middle is",middle);
             this.addScope = function (scope) {
@@ -82,6 +83,8 @@ app.directive('communicate', function (resourceMetrics,utilService) {
                     scope.shrunk=false;
                     scope.isMiddle=true;
                     currentIndex=scope.index;
+                     defaultCarouselPos=((currentIndex)*(resourceMetrics.left+utilService.getRotatedLeft()))/2;
+                    $element.find('.carousel').css({transform: 'translateX(' + (-defaultCarouselPos) + 'px )'})
                 }
                 scope.init();
             };
@@ -102,28 +105,26 @@ app.directive('communicate', function (resourceMetrics,utilService) {
             };
 
             $scope.prev = function () {
-                if(currentPosition<0&&currentIndex){
+              var index=currentIndex-1;
+                if(index>=0 && index<=scopes.length-1){
+                    var currentItem=scopes[currentIndex];
+                    currentItem.isLeft=false;
+                    currentItem.isMiddle=false;
+                    currentItem.isRight=true;
+                    currentItem.shrunk=true;
+                    currentIndex=index;
+                    currentPosition+=(utilService.getRotatedLeft()+resourceMetrics.left);
+                    var item=scopes[currentIndex];
+                    item.shrunk=false;
+                    item.isRight=false;
+                    item.isLeft=false;
+                    item.isMiddle=true;
+                    $element.find('.carousel').css({transform: 'translateX(' + (currentPosition-defaultCarouselPos) + 'px )'})
 
-                    currentPosition+=resourceMetrics.panelWidth+resourceMetrics.left;
-                    if(currentPosition<=0){
-                        var item=scopes[currentIndex];
-                        item.shrunk=true;
-                        currentIndex-=1;
-                        $element.find('.carousel').css({transform: 'translateX(' + (currentPosition) + 'px )'});
-                    }
-
-                }
-                if(currentPosition>0){
-                    currentPosition=0;
                 }
             };
 
             $scope.next = function () {
-
-
-                if(!currentIndex){
-                    currentIndex=resourceMetrics.flatItems-1
-                }else{
                     var index=currentIndex+1;
                     if(index>=0 && index<=scopes.length-1){
                         var currentItem=scopes[currentIndex];
@@ -134,14 +135,14 @@ app.directive('communicate', function (resourceMetrics,utilService) {
                     }else{
                         return;
                     }
-                }
-                currentPosition-=resourceMetrics.left;
+
+                currentPosition-=(utilService.getRotatedLeft()+resourceMetrics.left);
                var item=scopes[currentIndex];
                 item.shrunk=false;
                 item.isRight=false;
                 item.isLeft=false;
                 item.isMiddle=true;
-                $element.find('.carousel').css({transform: 'translateX(' + (currentPosition) + 'px )'});
+                $element.find('.carousel').css({transform: 'translateX(' + (currentPosition-defaultCarouselPos) + 'px )'});
 
             };
 
@@ -157,9 +158,6 @@ app.directive("resourceCard", function (resourceMetrics,utilService) {
         '<div class="frame" ng-class="{\'cover\': isCover,\'book\': !isCover}">' +
         '<span class="title">Documents</span>' +
         '<span class="duration">00:08</span>' +
-        '</div>' +
-        '<div class="back">' +
-        '<h1>this is some sample card</h1>'+
         '</div>' +
         '</figure>',
         restrict: "E",
@@ -183,20 +181,21 @@ app.directive("resourceCard", function (resourceMetrics,utilService) {
                 };
                 scope.getZindex=function(){
                     if(scope.isLeft){
+                        element.find('.frame').css({transform: 'translateX(' + (utilService.getRotatedLeft()-resourceMetrics.panelWidth) + 'px )'});
                         return utilService.getMinZIndex()+scope.index;
                     }
                     if(scope.isRight){
                         return utilService.getMaxZIndex()-scope.index;
                     }
 
-                }
+                };
                 scope.getWidth=function(){
                     if(scope.shrunk){
                         return utilService.getRotatedLeft()+"px";
                     }else{
                         return resourceMetrics.panelWidth+"px";
                     }
-                }
+                };
                 scope.handleClick = function () {
                     communicationController.closeLastOpened();
                     communicationController.openThis(scope);

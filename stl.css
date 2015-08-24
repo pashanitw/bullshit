@@ -28,16 +28,19 @@ figure{
     background-image: url("cover_2.png");
 }
 figure.rotate-left{
-    transform-origin: center center;
-    transform: perspective(1000px) rotateY(65deg);
+    transform-origin: right center;
+    transform: perspective(1000px) rotateY(59deg);
 }
 figure.rotate-right{
-    transform-origin: center center;
-    transform: perspective(1000px) rotateY(-62deg);
+    transform-origin: left center;
+    transform: perspective(1000px) rotateY(-59deg);
 }
 figure.middle{
-    margin-left: 40px;
+   /* margin-left: 40px;*/
     transform:rotateY(0deg);
+}
+figure.middle .frame,figure.rotate-right .frame{
+    transform: translateX(0) !important;
 }
 figure .frame{
     position: absolute;
